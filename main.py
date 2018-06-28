@@ -44,19 +44,19 @@ def main(user):
     fwng2 = page.find('}, "follows_viewer":')
     fwng2_p2 = len('}, "follows_viewer":')
     following = page[fwng+fwng_p1:fwng2]
-    l= str()
+    init_description= str()
     for i in description:
-        l+=i
-    l= l.replace('\\n', '')
-    description = l
+        init_description+=i
+    init_description= init_description.replace('\\n', '')
+    description = init_description
     # Manual scrape finished
-    # FF is a dict, where I saved the post objects as keys and values is a tuple of the content
-    ff=dict()
+    # dict_posts is a dictionary, where I saved the post objects as keys and values is a tuple of the content
+    dict_posts=dict()
     for i in psts:
-        ff[i] = i.likes+i.comments,'=IMAGE("'+str(i.url)+'",4,100,100)',i.url,i.caption,'', '',i.caption_hashtags,len(i.caption_hashtags),i.likes,i.comments
-    sorted_x = sorted(ff.items(), key=operator.itemgetter(1), reverse=True)
+        dict_posts[i] = i.likes+i.comments,'=IMAGE("'+str(i.url)+'",4,100,100)',i.url,i.caption,'', '',i.caption_hashtags,len(i.caption_hashtags),i.likes,i.comments
+    posts_list = sorted(dict_posts.items(), key=operator.itemgetter(1), reverse=True)
     print("--- %s seconds is what take to scrape data to a list of objects ---" % (time.time() - start_time))
-    # sorted_x is a list of the post objects and props. With this func the dict gets ordered by likes+comments.
+    # posts_list is a list of the post objects and props. With this func the dict gets ordered by likes+comments.
 
     # ----- IMPORTANT ---------
     # workbook, creating sheet. Name can be whatever, but be sure to change it in the apius.py as well.
@@ -111,12 +111,13 @@ def main(user):
     # Insert an image.
     format2= workbook.add_format({'bold': True, 'font_color': 'black', 'bg_color': 'silver'})
     counter_H = 2
+    # This loop controls the quantity of posts
     for i in range(1,101):
         counter_H+=1
         worksheet.write(str('H'+str(counter_H)),i, format2)
 
     # list of characters, with this I generate the position for the further data
-    pos_sh = list(map(chr, range(73, 83)))
+    list_abecedary = list(map(chr, range(73, 83)))
     # since we start writing the Total post data in the third row, we start a for loop at 2 and adds 1, that finishes
     # at the 100 requested posts, so there will be 2+1, 3+1, till 102. This will be the position, w/ the char list
     # A3, B3, C3.... A102, B102, C102
@@ -124,18 +125,18 @@ def main(user):
     #m = [('comment+likes', pst', 'link2p', 'pst_cap', '', '', 'hashtags', 'num_hash', 'likes', 'comments')]
     for i in range(100):
         pos+=1
-        # for loop, to get the char. lj will be now the position eg. A54 in a loop instance. Or B52 in another instance
-        # PD Not OOP instance, I mean like physical (time) instance
-        for j in range(0, len(pos_sh)):
-            lj = pos_sh[j] + str(pos)
+        # for loop, to get the char. cell will be now the cell position eg. A54 in a loop. Or B52 in another loop
+        for j in range(0, len(list_abecedary)):
+            abecedary_letter = list_abecedary[j]
+            cell = abecedary_letter  + str(pos)
             # writing in the position or cell address (An, Bn, Cn... * 100) the value sorted_[i][1][j]
             # that stands for [i], loop til 100 posts, [1], because is saved in tuple, so [0], and [j] because of the
             # str index in the tuple, since the char list and the data has to be the same len, in 1, the data would be
             # the image in Jn cell, in 2 would be captions in Kn cell
-            worksheet.write(lj, str(sorted_x[i][1][j]))
+            worksheet.write(cell, str(posts_list[i][1][j]))
     workbook.close()
     upload_sheet(namef, prof1)
     # this could be replaced for a better way to call the main function of the google drive api
     print("--- %s seconds is what takes to fully run the script ---" % (time.time() - start_time))
-main(USERNAME_STRING) # pass string username example 'type.gang'
+main('davidpenott') # pass string username e.g:'Google'
 # By David Ramos Penott
