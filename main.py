@@ -12,9 +12,9 @@ def main(user):
     instagramUsername = user #str(input("Profile to scrape: "))
     profileUrl = "https://www.instagram.com/" + instagramUsername
     # instance of InstaLoader
-    br = instaloader.Instaloader()
+    instagramLoader = instaloader.Instaloader()
     # instagramUsername is the username given when you call the func
-    instagramProfile = Profile.from_username(br.context, instagramUsername)
+    instagramProfile = Profile.from_username(instagramLoader.context, instagramUsername)
     description = instagramProfile.biography
     following = instagramProfile.followees
     followers = instagramProfile.followers
