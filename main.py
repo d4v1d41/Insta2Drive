@@ -1,70 +1,43 @@
 #!/usr/bin/env python; # -*- coding: utf-8 -*-
 import os
 import csv
-import instaloader
+from instaloader import *
 import operator
 import xlsxwriter
-import requests
 import time
 from apius import *
 
-
-# main(x) --- > given username to scrape its profile
 def main(user):
     start_time = time.time()
+    instagramUsername = user #str(input("Profile to scrape: "))
+    profileUrl = "https://www.instagram.com/"+instagramUsername
     # instance of InstaLoader
     br = instaloader.Instaloader()
-    # prof1 is the username given when you called the func
-    prof1 = user #str(input("Profile to scrape: "))
-    f = br.get_profile_metadata(prof1)
+    # instagramUsername is the username given when you call the func
+    instagramProfile = Profile.from_username(br.context, instagramUsername)
+    description = instagramProfile.biography
+    following = instagramProfile.followees
+    followers = instagramProfile.followers
     # first list of Post objects
-    psts= list()
-    for i in br.get_profile_posts(f):
-        psts.append(i)
-    link1 = "https://www.instagram.com/"+prof1
+    postsList= list()
+    for posts in instagramProfile.get_posts():
+        postsList.append(posts)
     #posts quantity
-    posts_qty = len(psts)
-
-    # Scraping manually to get this values, had some troubles with Bfsoup PD: Still the scraping is quite fast (0.9s)
-    page = requests.get(link1).text
-    m=page.find('biography": "')
-    k= len('biography": "')
-    n= page.find('"blo')
-    #print(page)
-    description = page[m+k:n-len('"blo')]
-
-    fws= page.find('"followed_by": {"count": ')
-    fws_p1 = len('"followed_by": {"count": ')
-    fws2 = page.find('}, "followed_by_viewer":')
-    fws2_p2 = len('}, "followed_by_viewer":')
-    followers = page[fws+fws_p1:fws2]
-
-    fwng = page.find('"follows": {"count": ')
-    fwng_p1 = len('"follows": {"count": ')
-    fwng2 = page.find('}, "follows_viewer":')
-    fwng2_p2 = len('}, "follows_viewer":')
-    following = page[fwng+fwng_p1:fwng2]
-    init_description= str()
-    for i in description:
-        init_description+=i
-    init_description= init_description.replace('\\n', '')
-    description = init_description
-    # Manual scrape finished
-    # dict_posts is a dictionary, where I saved the post objects as keys and values is a tuple of the content
+    numberOfPosts = len(postsList)
     dict_posts=dict()
-    for i in psts:
-        dict_posts[i] = i.likes+i.comments,'=IMAGE("'+str(i.url)+'",4,100,100)',i.url,i.caption,'', '',i.caption_hashtags,len(i.caption_hashtags),i.likes,i.comments
-    posts_list = sorted(dict_posts.items(), key=operator.itemgetter(1), reverse=True)
+    for post in postsList:
+        dict_posts[post] = post.likes, '=IMAGE("' + str(post.url) + '",4,100,100)', post.url, post.caption, '', '', post.caption_hashtags, len(post.caption_hashtags), post.likes, post.comments
+    posts_list = sorted(dict_posts.items(), key = operator.itemgetter(1), reverse= True)
+    # dict_posts is a dictionary, where I saved the post objects as keys and values is a tuple of the content
     print("--- %s seconds is what take to scrape data to a list of objects ---" % (time.time() - start_time))
     # posts_list is a list of the post objects and props. With this func the dict gets ordered by likes+comments.
 
     # ----- IMPORTANT ---------
     # workbook, creating sheet. Name can be whatever, but be sure to change it in the apius.py as well.
     # PD: something obvious but you could make apius main() func take the name of the file as argument
-    namef = prof1+".xlsx"
-    workbook = xlsxwriter.Workbook(namef)
+    sheetName = instagramUsername+".xlsx"
+    workbook = xlsxwriter.Workbook(sheetName)
     worksheet = workbook.add_worksheet()
-
     # formatting big header (Account - Total posts)
     format = workbook.add_format({'bold': True, 'font_color': 'white', 'bg_color': 'black', 'font_size': '28'})
     # Widen columns
@@ -101,42 +74,44 @@ def main(user):
     worksheet.write('R2', 'Comments')
 
     # writing Account data in cells
-    worksheet.write('A3', prof1)
-    worksheet.write("B3", link1)
+    worksheet.write('A3', instagramUsername)
+    worksheet.write("B3", profileUrl)
     worksheet.write("C3", description)
-    worksheet.write("D3", posts_qty)
+    worksheet.write("D3", numberOfPosts)
     worksheet.write("E3", followers)
     worksheet.write("F3", following)
-    worksheet.write("G3", posts_qty)
+    worksheet.write("G3", numberOfPosts)
     # Insert an image.
     format2= workbook.add_format({'bold': True, 'font_color': 'black', 'bg_color': 'silver'})
-    counter_H = 2
+    startPosition = 2
     # This loop controls the quantity of posts
     for i in range(1,101):
-        counter_H+=1
-        worksheet.write(str('H'+str(counter_H)),i, format2)
-
+        if(i > numberOfPosts):
+            break
+        startPosition+=1
+        worksheet.write(str('H'+str(startPosition)),i, format2)
     # list of characters, with this I generate the position for the further data
     list_abecedary = list(map(chr, range(73, 83)))
     # since we start writing the Total post data in the third row, we start a for loop at 2 and adds 1, that finishes
     # at the 100 requested posts, so there will be 2+1, 3+1, till 102. This will be the position, w/ the char list
     # A3, B3, C3.... A102, B102, C102
-    pos = 2
+    startPosition = 2
     #m = [('comment+likes', pst', 'link2p', 'pst_cap', '', '', 'hashtags', 'num_hash', 'likes', 'comments')]
-    for i in range(100):
-        pos+=1
-        # for loop, to get the char. cell will be now the cell position eg. A54 in a loop. Or B52 in another loop
+    if(numberOfPosts > 100):
+        numberOfPosts = 100
+    for i in range(numberOfPosts):
+        startPosition+=1
+        # for loop, to get the char. cell will be now the cell startPositionition eg. A54 in a loop. Or B52 in another loop
         for j in range(0, len(list_abecedary)):
-            abecedary_letter = list_abecedary[j]
-            cell = abecedary_letter  + str(pos)
+            cell = list_abecedary[j] + str(startPosition)
             # writing in the position or cell address (An, Bn, Cn... * 100) the value sorted_[i][1][j]
             # that stands for [i], loop til 100 posts, [1], because is saved in tuple, so [0], and [j] because of the
             # str index in the tuple, since the char list and the data has to be the same len, in 1, the data would be
             # the image in Jn cell, in 2 would be captions in Kn cell
             worksheet.write(cell, str(posts_list[i][1][j]))
     workbook.close()
-    upload_sheet(namef, prof1)
+    upload_sheet(sheetName, instagramUsername)
     # this could be replaced for a better way to call the main function of the google drive api
     print("--- %s seconds is what takes to fully run the script ---" % (time.time() - start_time))
-main('davidpenott') # pass string username e.g:'Google'
+main('daveit0') # pass string username e.g:'Google'
 # By David Ramos Penott
