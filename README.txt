@@ -18,14 +18,13 @@
             -pip3 install --upgrade google-api-python-client
             -pip3 install xlsxwriter
 
-            Used libs:
+            And:
             -google-api-python-client
             -os
             -csv
             -instaloader
             -operator
             -xlsxwriter
-            -requests
             -time
             -httplib2
 

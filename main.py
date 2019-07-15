@@ -10,7 +10,7 @@ from apius import *
 def main(user):
     start_time = time.time()
     instagramUsername = user #str(input("Profile to scrape: "))
-    profileUrl = "https://www.instagram.com/"+instagramUsername
+    profileUrl = "https://www.instagram.com/" + instagramUsername
     # instance of InstaLoader
     br = instaloader.Instaloader()
     # instagramUsername is the username given when you call the func
@@ -27,15 +27,14 @@ def main(user):
     dict_posts=dict()
     for post in postsList:
         dict_posts[post] = post.likes, '=IMAGE("' + str(post.url) + '",4,100,100)', post.url, post.caption, '', '', post.caption_hashtags, len(post.caption_hashtags), post.likes, post.comments
-    posts_list = sorted(dict_posts.items(), key = operator.itemgetter(1), reverse= True)
+    posts_list = sorted(dict_posts.items(), key = operator.itemgetter(1), reverse = True)
     # dict_posts is a dictionary, where I saved the post objects as keys and values is a tuple of the content
     print("--- %s seconds is what take to scrape data to a list of objects ---" % (time.time() - start_time))
     # posts_list is a list of the post objects and props. With this func the dict gets ordered by likes+comments.
-
     # ----- IMPORTANT ---------
     # workbook, creating sheet. Name can be whatever, but be sure to change it in the apius.py as well.
     # PD: something obvious but you could make apius main() func take the name of the file as argument
-    sheetName = instagramUsername+".xlsx"
+    sheetName = instagramUsername + ".xlsx"
     workbook = xlsxwriter.Workbook(sheetName)
     worksheet = workbook.add_worksheet()
     # formatting big header (Account - Total posts)
@@ -51,7 +50,7 @@ def main(user):
     # big headers. formatting rest of cells
     M = ['B1','C1', 'D1', 'E1', 'F1', 'G1']
     for i in M:
-        worksheet.write(i, '',format)
+        worksheet.write(i, '', format)
     worksheet.write('A2', 'Instagram')
     worksheet.write('B2', 'Handle URL')
     worksheet.write('C2', 'Blurb')
@@ -72,7 +71,6 @@ def main(user):
     worksheet.write('P2', '# of hashtags')
     worksheet.write('Q2', 'Likes')
     worksheet.write('R2', 'Comments')
-
     # writing Account data in cells
     worksheet.write('A3', instagramUsername)
     worksheet.write("B3", profileUrl)
@@ -96,7 +94,6 @@ def main(user):
     # at the 100 requested posts, so there will be 2+1, 3+1, till 102. This will be the position, w/ the char list
     # A3, B3, C3.... A102, B102, C102
     startPosition = 2
-    #m = [('comment+likes', pst', 'link2p', 'pst_cap', '', '', 'hashtags', 'num_hash', 'likes', 'comments')]
     if(numberOfPosts > 100):
         numberOfPosts = 100
     for i in range(numberOfPosts):
